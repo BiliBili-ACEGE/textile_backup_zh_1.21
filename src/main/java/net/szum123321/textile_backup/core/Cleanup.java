@@ -19,6 +19,7 @@
 package net.szum123321.textile_backup.core;
 
 import  net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -49,6 +50,7 @@ public class Cleanup implements Callable<Integer> {
 	}
 
 	public Integer call() {
+		Text info = Text.translatable("text.old.files.info");
 		Path root = Utilities.getBackupRootPath(worldName);
 		int deletedFiles = 0;
 
@@ -58,7 +60,7 @@ public class Cleanup implements Callable<Integer> {
 			final long now = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
 
 			deletedFiles += RestoreableFile.applyOnFiles(root, 0L,
-					e -> log.error("An exception occurred while trying to delete old files!", e),
+					e -> log.error(info.getString(), e),
 					stream -> stream.filter(f -> now - f.getCreationTime().toEpochSecond(ZoneOffset.UTC) > config.get().maxAge)
 							.filter(f -> deleteFile(f.getFile(), ctx))
 							.count()
@@ -72,7 +74,7 @@ public class Cleanup implements Callable<Integer> {
 		long n = counts[0], size = counts[1];
 
 		var it = RestoreableFile.applyOnFiles(root, null,
-				e -> log.error("An exception occurred while trying to delete old files!", e),
+				e -> log.error(info.getString(), e),
 				s -> s.sorted().toList().iterator());
 
 		if(Objects.isNull(it)) return deletedFiles;
@@ -95,6 +97,8 @@ public class Cleanup implements Callable<Integer> {
 	}
 
 	private long[] count(Path root) {
+		Text size_error_info = Text.translatable("text.size.error.info");
+		Text white_file_error_info = Text.translatable("text.white_file.error.info");
 		long n = 0, size = 0;
 
 		try(Stream<Path> stream = Files.list(root)) {
@@ -104,13 +108,13 @@ public class Cleanup implements Callable<Integer> {
 				try {
 					size += Files.size(f.getFile());
 				} catch (IOException e) {
-					log.error("Couldn't get size of " + f.getFile(), e);
+					log.error(size_error_info.getString() + f.getFile(), e);
 					continue;
 				}
 				n++;
 			}
 		} catch (IOException e) {
-			log.error("Error while counting files!", e);
+			log.error(white_file_error_info.getString(), e);
 		}
 
 		return new long[]{n, size};
@@ -123,13 +127,16 @@ public class Cleanup implements Callable<Integer> {
 
 	//1 -> ok, 0 -> err
 	private boolean deleteFile(Path f, ServerCommandSource ctx) {
+		Text info = Text.translatable("text.Delete.info");
+		Text deletinginfo = Text.translatable("text.Deleteing.info");
+
 		if(Globals.INSTANCE.getLockedFile().filter(p -> p == f).isPresent()) return false;
 		try {
 			Files.delete(f);
-			log.sendInfoAL(ctx, "Deleted: {}", f);
+			log.sendInfoAL(ctx, info.getString(), f);
 		} catch (IOException e) {
-			if(Utilities.wasSentByPlayer(ctx)) log.sendError(ctx, "Something went wrong while deleting: {}.", f);
-			log.error("Something went wrong while deleting: {}.", f, e);
+			if(Utilities.wasSentByPlayer(ctx)) log.sendError(ctx, deletinginfo.getString(), f);
+			log.error(deletinginfo.getString(), f, e);
 			return false;
 		}
 		return true;

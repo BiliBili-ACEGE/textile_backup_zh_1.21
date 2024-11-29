@@ -18,6 +18,7 @@
 
 package net.szum123321.textile_backup.core.create.compressors;
 
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -46,7 +47,8 @@ public abstract class AbstractCompressor {
 
     public void createArchive(Path inputFile, Path outputFile, ExecutableBackup ctx, int coreLimit) throws IOException, ExecutionException, InterruptedException {
         Instant start = Instant.now();
-
+        Text info = Text.translatable("text.Compression.took.info");
+        Text loginfo = Text.translatable("text.log.info");
         BrokenFileHandler brokenFileHandler = new BrokenFileHandler(); //Basically a hashmap storing files and their respective exceptions
 
         try (OutputStream outStream = Files.newOutputStream(outputFile);
@@ -76,7 +78,7 @@ public abstract class AbstractCompressor {
                     fileHashBuilder.update(file, 0, 0);
                     //In Permissive mode we allow partial backups
                     if (ConfigHelper.INSTANCE.get().integrityVerificationMode.isStrict()) throw e;
-                    else log.sendErrorAL(ctx, "An exception occurred while trying to compress: {}",
+                    else log.sendErrorAL(ctx, loginfo.getString(),
                             inputFile.relativize(file).toString(), e
                     );
                 }
@@ -103,7 +105,7 @@ public abstract class AbstractCompressor {
             close();
         }
 
-        log.sendInfoAL(ctx, "Compression took: {} seconds.", Utilities.formatDuration(Duration.between(start, Instant.now())));
+        log.sendInfoAL(ctx, info.getString(), Utilities.formatDuration(Duration.between(start, Instant.now())));
     }
 
     protected abstract OutputStream createArchiveOutputStream(OutputStream stream, ExecutableBackup ctx, int coreLimit) throws IOException;

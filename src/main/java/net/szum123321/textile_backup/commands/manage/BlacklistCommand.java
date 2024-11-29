@@ -25,6 +25,7 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
 import net.szum123321.textile_backup.config.ConfigHelper;
@@ -49,7 +50,8 @@ public class BlacklistCommand {
 	}
 
 	private static int help(ServerCommandSource source) {
-		log.sendInfo(source, "Available command are: add [player], remove [player], list.");
+		Text info = Text.translatable("text.list.info");
+		log.sendInfo(source, info.getString());
 
 		return 1;
 	}
@@ -57,7 +59,7 @@ public class BlacklistCommand {
 	private static int executeList(ServerCommandSource source) {
 		StringBuilder builder = new StringBuilder();
 
-		builder.append("Currently on the blacklist are: ");
+		builder.append(Text.translatable("text.blacklist.info").getString());
 
 		for(String name : config.get().playerBlacklist){
 			builder.append(name);
@@ -71,26 +73,26 @@ public class BlacklistCommand {
 
 	private static int executeAdd(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 		ServerPlayerEntity player = EntityArgumentType.getPlayer(ctx, "player");
-
+		Text info = Text.translatable("text.playerblacklist.info");
 		if(config.get().playerBlacklist.contains(player.getNameForScoreboard())) {
-			log.sendInfo(ctx.getSource(), "Player: {} is already blacklisted.", player.getNameForScoreboard());
+			log.sendInfo(ctx.getSource(), info.getString(), player.getNameForScoreboard());
 		} else {
 			config.get().playerBlacklist.add(player.getNameForScoreboard());
 			config.save();
 
 			StringBuilder builder = new StringBuilder();
 
-			builder.append("Player: ");
+			builder.append(Text.translatable("text.playerlist.title"));
 			builder.append(player.getNameForScoreboard());
-			builder.append(" added to the blacklist");
+			builder.append(Text.translatable("text.addplayer.blacklist.info").getString());
 
 			if(config.get().playerWhitelist.contains(player.getNameForScoreboard())){
 				config.get().playerWhitelist.remove(player.getNameForScoreboard());
 				config.save();
-				builder.append(" and removed form the whitelist");
+				builder.append(Text.translatable("text.remove.whitelist.info").getString());
 			}
 
-			builder.append(" successfully.");
+			builder.append(Text.translatable("text.successfully.info").getString());
 
 			ctx.getSource().getServer().getCommandManager().sendCommandTree(player);
 
@@ -102,16 +104,17 @@ public class BlacklistCommand {
 
 	private static int executeRemove(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 		ServerPlayerEntity player = EntityArgumentType.getPlayer(ctx, "player");
-
+		Text info = Text.translatable("text.addplayer.black.info");
+		Text info2 = Text.translatable("text.remove.blacklist.info");
 		if(!config.get().playerBlacklist.contains(player.getNameForScoreboard())) {
-			log.sendInfo(ctx.getSource(), "Player: {} newer was blacklisted.", player.getNameForScoreboard());
+			log.sendInfo(ctx.getSource(), info.getString(), player.getNameForScoreboard());
 		} else {
 			config.get().playerBlacklist.remove(player.getNameForScoreboard());
 			config.save();
 
 			ctx.getSource().getServer().getCommandManager().sendCommandTree(player);
 
-			log.sendInfo(ctx.getSource(), "Player: {} removed from the blacklist successfully.", player.getNameForScoreboard());
+			log.sendInfo(ctx.getSource(), info2.getString(), player.getNameForScoreboard());
 		}
 
 		return 1;

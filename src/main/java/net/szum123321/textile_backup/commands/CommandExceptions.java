@@ -28,7 +28,7 @@ public class CommandExceptions {
     public static final DynamicCommandExceptionType DATE_TIME_PARSE_COMMAND_EXCEPTION_TYPE = new DynamicCommandExceptionType(o -> {
         DateTimeParseException e = (DateTimeParseException)o;
 
-        MutableText message = Text.literal("An exception occurred while trying to parse:\n")
+        MutableText message = Text.translatable("command.error.info")
                 .append(e.getParsedString())
                 .append("\n");
 

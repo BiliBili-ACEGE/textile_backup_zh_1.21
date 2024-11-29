@@ -19,6 +19,7 @@
 package net.szum123321.textile_backup;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.core.digest.BalticHash;
 import net.szum123321.textile_backup.core.digest.Hash;
 import net.szum123321.textile_backup.core.Utilities;
@@ -89,21 +90,25 @@ public class Globals {
     }
 
     public void shutdownQueueExecutor(long timeout)  {
+        Text info = Text.translatable("text.timeout.info");
+        Text info2 = Text.translatable("text.dropping.info");
+        Text shutdowninfo = Text.translatable("text.shutdown.info");
+        Text exceptioninfo = Text.translatable("text.exception.info");
         if(executorService.isShutdown()) return;
         executorService.shutdown();
 
         try {
             if(!executorService.awaitTermination(timeout, TimeUnit.MICROSECONDS)) {
-                log.error("Timeout occurred while waiting for currently running backups to finish!");
+                log.error(info.getString());
                 executorService.shutdownNow().stream()
                        // .filter(r -> r instanceof ExecutableBackup)
                        // .map(r -> (ExecutableBackup)r)
-                        .forEach(r -> log.error("Dropping: {}", r.toString()));
+                        .forEach(r -> log.error(info2.getString(), r.toString()));
                 if(!executorService.awaitTermination(1000, TimeUnit.MICROSECONDS))
-                    log.error("Couldn't shut down the executor!");
+                    log.error(shutdowninfo.getString());
             }
         } catch (InterruptedException e) {
-            log.error("An exception occurred!", e);
+            log.error(exceptioninfo.getString(), e);
         }
 
     }
@@ -118,18 +123,20 @@ public class Globals {
 
     public synchronized boolean disableTMPFS() { return disableTMPFiles; }
     public synchronized void updateTMPFSFlag(MinecraftServer server) {
+        Text enoughinfo = Text.translatable("text.enough.info");
+        Text readinfo = Text.translatable("text.read-only.info");
         disableTMPFiles = false;
         Path tmp_dir = Path.of(System.getProperty("java.io.tmpdir"));
         if(
                 FileUtils.sizeOfDirectory(Utilities.getWorldFolder(server).toFile()) >=
                         tmp_dir.toFile().getUsableSpace()
         ) {
-            log.error("Not enough space left in TMP directory! ({})", tmp_dir);
+            log.error(enoughinfo.getString(), tmp_dir);
             disableTMPFiles = true;
         }
 
         if(!Files.isWritable(tmp_dir)) {
-            log.error("TMP filesystem ({}) is read-only!", tmp_dir);
+            log.error(readinfo.getString(), tmp_dir);
             disableTMPFiles = true;
         }
 

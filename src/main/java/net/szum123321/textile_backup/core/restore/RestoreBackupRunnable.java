@@ -18,6 +18,7 @@
 
 package net.szum123321.textile_backup.core.restore;
 
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -52,9 +53,11 @@ public class RestoreBackupRunnable implements Runnable {
 
     @Override
     public void run() {
+        Text run_info = Text.translatable("text.Shutting.server.info");
+        Text run_error_info =Text.translatable("text.unpacking_error.info");
         Globals.INSTANCE.globalShutdownBackupFlag.set(false);
 
-        log.info("Shutting down server...");
+        log.info(run_info.getString());
 
         ctx.server().stop(false);
 
@@ -67,7 +70,7 @@ public class RestoreBackupRunnable implements Runnable {
                     ctx.restoreableFile().getFile().getFileName().toString()
             );
         } catch (IOException e) {
-            log.error("An exception occurred while unpacking backup", e);
+            log.error(run_error_info.getString(), e);
             return;
         }
 
@@ -90,10 +93,12 @@ public class RestoreBackupRunnable implements Runnable {
         });
 
         //run the thread.
-        new Thread(waitForShutdown, "Server shutdown wait thread").start();
+        Text info = Text.translatable("text.Server.shutdown.wait.info");
+        new Thread(waitForShutdown, info.getString()).start();
 
         try {
-            log.info("Starting decompression...");
+            Text info2 = Text.translatable("text.starting.decomprseeion.info");
+            log.info(info2.getString());
 
             long hash;
 
@@ -101,20 +106,22 @@ public class RestoreBackupRunnable implements Runnable {
                 hash = ZipDecompressor.decompress(ctx.restoreableFile().getFile(), tmp);
             else
                 hash = GenericTarDecompressor.decompress(ctx.restoreableFile().getFile(), tmp);
-
-            log.info("Waiting for server to fully terminate...");
+            Text loginfo = Text.translatable("text.waiting.server.info");
+            log.info(loginfo.getString());
 
             //locks until the backup is finished and the server is dead
             waitForShutdown.get();
 
             Optional<String> errorMsg;
+            Text status_error_info = Text.translatable("text.status.error.info");
+            Text status_info = Text.translatable("text.status.info");
 
             if(Files.notExists(CompressionStatus.resolveStatusFilename(tmp))) {
-                errorMsg = Optional.of("Status file not found!");
+                errorMsg = Optional.of(status_error_info.getString());
             } else {
                 CompressionStatus status = CompressionStatus.readFromFile(tmp);
 
-                log.info("Status: {}", status);
+                log.info(status_info.getString(), status);
 
                 Files.delete(tmp.resolve(CompressionStatus.DATA_FILENAME));
 
@@ -122,8 +129,10 @@ public class RestoreBackupRunnable implements Runnable {
             }
 
             if(errorMsg.isEmpty() || !config.get().integrityVerificationMode.verify()) {
-                if (errorMsg.isEmpty()) log.info("Backup valid. Restoring");
-                else log.info("Backup is damaged, but verification is disabled [{}]. Restoring", errorMsg.get());
+                Text back_valid = Text.translatable("text.backup.valid.info");
+                Text back_damaged = Text.translatable("text.backup.damaged.info");
+                if (errorMsg.isEmpty()) log.info(back_valid.getString());
+                else log.info(back_damaged.getString(), errorMsg.get());
 
                 //Disables write lock to override world file
                 ((MinecraftServerSessionAccessor) ctx.server()).getSession().close();
@@ -132,7 +141,8 @@ public class RestoreBackupRunnable implements Runnable {
                 Files.move(tmp, worldFile);
 
                 if (config.get().deleteOldBackupAfterRestore) {
-                    log.info("Deleting restored backup file");
+                    Text Deleting_restored = Text.translatable("text.restored.Deleting.info");
+                    log.info(Deleting_restored.getString());
                     Files.delete(ctx.restoreableFile().getFile());
                 }
             } else {
@@ -140,7 +150,8 @@ public class RestoreBackupRunnable implements Runnable {
             }
 
         } catch (Exception e) {
-            log.error("An exception occurred while trying to restore a backup!", e);
+            Text log_info = Text.translatable("text.error.restore.info");
+            log.error(log_info.getString(), e);
         } finally {
             //Regardless of what happened, we should still clean up
             if(Files.exists(tmp)) {
@@ -152,7 +163,7 @@ public class RestoreBackupRunnable implements Runnable {
 
         //in case we're playing on client
         Globals.INSTANCE.globalShutdownBackupFlag.set(true);
-
-        log.info("Done!");
+        Text done = Text.translatable("text.done.info");
+        log.info(done.getString());
     }
 }

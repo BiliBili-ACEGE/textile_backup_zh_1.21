@@ -21,6 +21,7 @@ package net.szum123321.textile_backup.commands.restore;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -30,10 +31,16 @@ import net.szum123321.textile_backup.core.restore.AwaitThread;
 public class KillRestoreCommand {
     private final static TextileLogger log = new TextileLogger(TextileBackup.MOD_NAME);
     public static LiteralArgumentBuilder<ServerCommandSource> register() {
+        Text info = Text.translatable("text.restoration.error.info");
+        Text info2 = Text.translatable("text.restoration.backup.info");
+        Text info3 = Text.translatable("text.playerlist.title");
+        Text info4 = Text.translatable("text.server.title");
+        Text info5 = Text.translatable("text.backup.restoration.stop.info");
+
         return CommandManager.literal("killR")
                 .executes(ctx -> {
                     if(Globals.INSTANCE.getAwaitThread().filter(Thread::isAlive).isEmpty()) {
-                        log.sendInfo(ctx.getSource(), "Failed to stop backup restoration");
+                        log.sendInfo(ctx.getSource(), info.getString());
                         return -1;
                     }
 
@@ -43,13 +50,13 @@ public class KillRestoreCommand {
                     Globals.INSTANCE.globalShutdownBackupFlag.set(true);
                     Globals.INSTANCE.setLockedFile(null);
 
-                    log.info("{} cancelled backup restoration.", Utilities.wasSentByPlayer(ctx.getSource()) ?
-                            "Player: " + ctx.getSource().getName() :
-                            "SERVER"
+                    log.info(info2.getString(), Utilities.wasSentByPlayer(ctx.getSource()) ?
+                            info3.getString() + ctx.getSource().getName() :
+                            info4.getString()
                     );
 
                     if(Utilities.wasSentByPlayer(ctx.getSource()))
-                        log.sendInfo(ctx.getSource(), "Backup restoration successfully stopped.");
+                        log.sendInfo(ctx.getSource(), info5.getString());
 
                     return 1;
                 });

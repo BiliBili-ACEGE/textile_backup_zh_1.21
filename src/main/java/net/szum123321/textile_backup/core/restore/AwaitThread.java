@@ -18,6 +18,7 @@
 
 package net.szum123321.textile_backup.core.restore;
 
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
 
@@ -35,20 +36,23 @@ public class AwaitThread extends Thread {
     private final Runnable taskRunnable;
 
     public AwaitThread(int delay, Runnable taskRunnable) {
-        this.setName("Textile Backup await thread nr. " + thisThreadId);
+        Text info = Text.translatable("text.textile.backup.await.info");
+        this.setName(info.getString() + thisThreadId);
         this.delay = delay;
         this.taskRunnable = taskRunnable;
     }
 
     @Override
     public void run() {
-        log.info("Countdown begins... Waiting {} second.", delay);
+        Text info = Text.translatable("text.countdown.info");
+        log.info(info.getString(), delay);
 
         // 𝄞 This is final count down! Tu ruru Tu, Tu Ru Tu Tu ♪
         try {
             Thread.sleep(delay * 1000L);
         } catch (InterruptedException e) {
-            log.info("Backup restoration cancelled.");
+            Text backup_rest = Text.translatable("text.backup.restoration.info");
+            log.info(backup_rest.getString());
             return;
         }
 
@@ -57,6 +61,7 @@ public class AwaitThread extends Thread {
             But still it's farewell
             And maybe we'll come back
          */
-        new Thread(taskRunnable, "Textile Backup restore thread nr. " + thisThreadId).start();
+        Text info2 = Text.translatable("text.textile.backup.await.info");
+        new Thread(taskRunnable, info2.getString() + thisThreadId).start();
     }
 }

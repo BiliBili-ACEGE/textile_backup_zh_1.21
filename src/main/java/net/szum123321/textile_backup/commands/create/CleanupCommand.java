@@ -21,6 +21,7 @@ package net.szum123321.textile_backup.commands.create;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
 import net.szum123321.textile_backup.core.Cleanup;
@@ -35,9 +36,10 @@ public class CleanupCommand {
     }
 
     private static int execute(ServerCommandSource source) {
+        Text message = Text.translatable("text.cleanup.deleted_files");
         log.sendInfo(
                 source,
-                "Deleted: {} files.",
+                message.getString(),
                 new Cleanup(source, Utilities.getLevelName(source.getServer())).call()
         );
 

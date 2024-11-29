@@ -24,6 +24,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -43,6 +44,10 @@ public class RestoreBackupCommand {
     private final static TextileLogger log = new TextileLogger(TextileBackup.MOD_NAME);
 
     public static LiteralArgumentBuilder<ServerCommandSource> register() {
+        Text sendInfo = Text.translatable("text.sendInfo.info");
+        Text sendInfo2 = Text.translatable("text.sendInfo2.info");
+        Text sendInfo3 = Text.translatable("text.sendInfo3.info");
+        Text sendInfo4 = Text.translatable("text.sendInfo4.info");
         return CommandManager.literal("restore")
                 .then(CommandManager.argument("file", StringArgumentType.word())
                             .suggests(FileSuggestionProvider.Instance())
@@ -63,18 +68,21 @@ public class RestoreBackupCommand {
                 ).executes(context -> {
                     ServerCommandSource source = context.getSource();
 
-                    log.sendInfo(source, "To restore given backup you have to provide exact creation time in format:");
-                    log.sendInfo(source, "[YEAR]-[MONTH]-[DAY]_[HOUR].[MINUTE].[SECOND]");
-                    log.sendInfo(source, "Example: /backup restore 2020-08-05_10.58.33");
-                    log.sendInfo(source, "You may also type '/backup restore latest' to restore the freshest backup");
+                    log.sendInfo(source, sendInfo.getString());
+                    log.sendInfo(source, sendInfo2.getString());
+                    log.sendInfo(source, sendInfo3.getString());
+                    log.sendInfo(source, sendInfo4.getString());
 
                     return 1;
                 });
     }
 
     private static int execute(String file, @Nullable String comment, ServerCommandSource source) throws CommandSyntaxException {
+        Text sendInfo5 = Text.translatable("text.sendInfo5.info");
+        Text sendInfo6 = Text.translatable("text.sendInfo6.info");
+        Text sendInfo7 = Text.translatable("text.sendInfo7.info");
         if(Globals.INSTANCE.getAwaitThread().filter(Thread::isAlive).isPresent()) {
-            log.sendInfo(source, "Someone has already started another restoration.");
+            log.sendInfo(source, sendInfo5.getString());
 
             return -1;
         }
@@ -96,10 +104,10 @@ public class RestoreBackupCommand {
         }
 
         if(backupFile.isEmpty()) {
-            log.sendInfo(source, "No file created on {} was found!", dateTime.format(Globals.defaultDateTimeFormatter));
+            log.sendInfo(source, sendInfo6.getString(), dateTime.format(Globals.defaultDateTimeFormatter));
             return -1;
         } else {
-            log.info("Found file to restore {}", backupFile.get().getFile().getFileName().toString());
+            log.info(sendInfo7.getString(), backupFile.get().getFile().getFileName().toString());
 
             Globals.INSTANCE.setAwaitThread(
                     RestoreHelper.create(

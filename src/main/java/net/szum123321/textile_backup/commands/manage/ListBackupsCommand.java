@@ -21,6 +21,7 @@ package net.szum123321.textile_backup.commands.manage;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
 import net.szum123321.textile_backup.core.RestoreableFile;
@@ -37,14 +38,14 @@ public class ListBackupsCommand {
                     var backups = RestoreHelper.getAvailableBackups(ctx.getSource().getServer());
 
                     if(backups.size() == 0) {
-                        builder.append("There a no backups available for this world.");
+                        builder.append(Text.translatable("text.backup.error.info").getString());
                     } else if(backups.size() == 1) {
-                        builder.append("There is only one backup available: ");
+                        builder.append(Text.translatable("text.backup.count.one").getString());
                         builder.append(backups.get(0).toString());
                     } else {
                         backups.sort(null);
                         Iterator<RestoreableFile> iterator = backups.iterator();
-                        builder.append("Available backups:\n");
+                        builder.append(Text.translatable("text.backups.available.info").getString());
 
                         builder.append(iterator.next());
 

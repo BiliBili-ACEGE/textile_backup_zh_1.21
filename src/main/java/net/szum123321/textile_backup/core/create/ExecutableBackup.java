@@ -2,6 +2,7 @@ package net.szum123321.textile_backup.core.create;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -42,17 +43,18 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
     }
 
     public void announce() {
+        Text info = Text.translatable("text.warning.info");
         if(config.get().broadcastBackupStart) {
             Utilities.notifyPlayers(server,
-                    "Warning! Server backup will begin shortly. You may experience some lag."
+                   info.getString()
             );
         } else {
-            log.sendInfoAL(this, "Warning! Server backup will begin shortly. You may experience some lag.");
+            log.sendInfoAL(this, info.getString());
         }
 
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Backup started ");
+        builder.append(Text.translatable("text.backup.started.info").getString());
 
         builder.append(initiator.getPrefix());
 
@@ -68,9 +70,19 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
     }
     @Override
     public Void call() throws Exception {
+        Text info = Text.translatable("text.outfile.title");
+        Text info2 = Text.translatable("text.saving.server.info");
+        Text info3 = Text.translatable("text.starting.backup.info");
+        Text info4 = Text.translatable("text.world.backup.info");
+        Text info5 = Text.translatable("text.running.info");
+        Text info6 = Text.translatable("text.parallel.Zip.info");
+        Text info7 = Text.translatable("text.regular.Zip.info");
+        Text info8 = Text.translatable("text.done.info");
+        Text errorfileinfo = Text.translatable("text.error.file.info");
+        Text errorwhileinfo = Text.translatable("text.error.while.info");
         Path outFile = Utilities.getBackupRootPath(Utilities.getLevelName(server)).resolve(getFileName());
 
-        log.trace("Outfile is: {}", outFile);
+        log.trace(info.getString(), outFile);
 
         AtomicReference<Optional<WorldSavingState>> state = new AtomicReference<>(Optional.empty());
 
@@ -83,7 +95,7 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
                 if (save) { //save the world
                     // We need to flush everything as next thing we'll be copying all the files.
                     // this is mostly the reason for #81 - minecraft doesn't flush during scheduled saves.
-                    log.sendInfoAL(this.commandSource, "Saving server...");
+                    log.sendInfoAL(this.commandSource, info2.getString());
 
                     server.saveAll(true, true, false);
                 }
@@ -92,11 +104,11 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
 
             Globals.INSTANCE.updateTMPFSFlag(server);
 
-            log.sendInfoAL(this, "Starting backup");
+            log.sendInfoAL(this, info3.getString());
 
             Path world = Utilities.getWorldFolder(server);
 
-            log.trace("Minecraft world is: {}", world);
+            log.trace(info4.getString(), world);
 
             Files.createDirectories(outFile.getParent());
             Files.createFile(outFile);
@@ -107,15 +119,15 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
             else
                 coreCount = Math.min(config.get().compressionCoreCountLimit, Runtime.getRuntime().availableProcessors());
 
-            log.trace("Running compression on {} threads. Available cores: {}", coreCount, Runtime.getRuntime().availableProcessors());
+            log.trace(info5.getString(), coreCount, Runtime.getRuntime().availableProcessors());
 
             switch (config.get().format) {
                 case ZIP -> {
                     if (coreCount > 1 && !Globals.INSTANCE.disableTMPFS()) {
-                        log.trace("Using PARALLEL Zip Compressor. Threads: {}", coreCount);
+                        log.trace(info6.getString(), coreCount);
                         ParallelZipCompressor.getInstance().createArchive(world, outFile, this, coreCount);
                     } else {
-                        log.trace("Using REGULAR Zip Compressor.");
+                        log.trace(info7.getString());
                         ZipCompressor.getInstance().createArchive(world, outFile, this, coreCount);
                     }
                 }
@@ -126,23 +138,23 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
 
             if(cleanup) new Cleanup(commandSource, Utilities.getLevelName(server)).call();
 
-            if (config.get().broadcastBackupDone) Utilities.notifyPlayers(server, "Done!");
-            else log.sendInfoAL(this, "Done!");
+            if (config.get().broadcastBackupDone) Utilities.notifyPlayers(server, info8.getString());
+            else log.sendInfoAL(this, info8.getString());
 
         } catch (Throwable e) {
             //ExecutorService swallows exception, so I need to catch everything
-            log.error("An exception occurred when trying to create a new backup file!", e);
+            log.error(errorfileinfo.getString(), e);
 
             if (ConfigHelper.INSTANCE.get().integrityVerificationMode.isStrict()) {
                 try {
                     Files.delete(outFile);
                 } catch (IOException ex) {
-                    log.error("An exception occurred while trying go delete: {}", outFile, ex);
+                    log.error(errorwhileinfo.getString(), outFile, ex);
                 }
             }
 
             if (initiator == ActionInitiator.Player)
-                log.sendError(this, "An exception occurred when trying to create new backup file!");
+                log.sendError(this, errorfileinfo.getString());
 
             throw e;
         } finally {
@@ -228,13 +240,15 @@ public record ExecutableBackup(@NotNull MinecraftServer server,
         }
 
         public ExecutableBackup build() {
+            Text providedinfo = Text.translatable("text.initiator.provided.info");
+            Text providedinfo2 = Text.translatable("text.provided.info");
             if (guessInitiator) {
                 initiator = Utilities.wasSentByPlayer(commandSource) ? ActionInitiator.Player : ActionInitiator.ServerConsole;
-            } else if (initiator == null) throw new NoSuchElementException("No initiator provided!");
+            } else if (initiator == null) throw new NoSuchElementException(providedinfo.getString());
 
             if (server == null) {
                 if (commandSource != null) setServer(commandSource.getServer());
-                else throw new RuntimeException("Neither MinecraftServer or ServerCommandSource were provided!");
+                else throw new RuntimeException(providedinfo2.getString());
             }
 
             ExecutableBackup v =  new ExecutableBackup(server, commandSource, initiator, save, cleanup, comment, LocalDateTime.now());

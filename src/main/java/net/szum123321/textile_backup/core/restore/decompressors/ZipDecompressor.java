@@ -18,6 +18,7 @@
 
 package net.szum123321.textile_backup.core.restore.decompressors;
 
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
 import net.szum123321.textile_backup.core.digest.FileTreeHashBuilder;
@@ -39,7 +40,7 @@ public class ZipDecompressor {
 
     public static long decompress(Path inputFile, Path target) throws IOException {
         Instant start = Instant.now();
-
+        Text info = Text.translatable("text.Compression.took.info");
         FileTreeHashBuilder hashBuilder = new FileTreeHashBuilder(0);
 
         try(ZipFile zipFile = new ZipFile(inputFile.toFile())) {
@@ -61,7 +62,7 @@ public class ZipDecompressor {
             }
         }
 
-        log.info("Decompression took: {} seconds.", Utilities.formatDuration(Duration.between(start, Instant.now())));
+        log.info(info.getString(), Utilities.formatDuration(Duration.between(start, Instant.now())));
 
         try {
             return hashBuilder.getValue(false);

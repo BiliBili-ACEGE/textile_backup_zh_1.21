@@ -23,6 +23,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -51,7 +52,14 @@ public class DeleteCommand {
 
     private static int execute(ServerCommandSource source, String fileName) throws CommandSyntaxException {
         LocalDateTime dateTime;
-
+        Text info = Text.translatable("text.delete.error.info");
+        Text info2 = Text.translatable("text.delete.success.info");
+        Text info3 = Text.translatable("text.deleted.player.success.info");
+        Text info4 = Text.translatable("text.deleted.player.error.info");
+        Text info5 = Text.translatable("text.deleted.file.error.info");
+        Text info6 = Text.translatable("text.stop.help.info");
+        Text info7 = Text.translatable("text.filename.find.error.info");
+        Text info8 = Text.translatable("text.try.help.info");
         try {
             dateTime = LocalDateTime.from(Globals.defaultDateTimeFormatter.parse(fileName));
         } catch (DateTimeParseException e) {
@@ -61,26 +69,26 @@ public class DeleteCommand {
         Path root = Utilities.getBackupRootPath(Utilities.getLevelName(source.getServer()));
 
         RestoreableFile.applyOnFiles(root, Optional.empty(),
-                e -> log.sendErrorAL(source, "An exception occurred while trying to delete a file!", e),
+                e -> log.sendErrorAL(source, info.getString(), e),
                 stream -> stream.filter(f -> f.getCreationTime().equals(dateTime)).map(RestoreableFile::getFile).findFirst()
                 ).ifPresentOrElse(file -> {
                     if(Globals.INSTANCE.getLockedFile().filter(p -> p == file).isEmpty()) {
                         try {
                             Files.delete((Path) file);
-                            log.sendInfo(source, "File {} successfully deleted!", file);
+                            log.sendInfo(source, info2.getString(), file);
 
                             if(Utilities.wasSentByPlayer(source))
-                                log.info("Player {} deleted {}.", source.getPlayer().getName(), file);
+                                log.info(info3.getString(), source.getPlayer().getName(), file);
                         } catch (IOException e) {
-                            log.sendError(source, "Something went wrong while deleting file!");
+                            log.sendError(source, info4.getString());
                         }
                     } else {
-                        log.sendError(source, "Couldn't delete the file because it's being restored right now.");
-                        log.sendHint(source, "If you want to abort restoration then use: /backup killR");
+                        log.sendError(source, info5.getString());
+                        log.sendHint(source, info6.getString());
                     }
                 }, () -> {
-                    log.sendInfo(source, "Couldn't find file by this name.");
-                    log.sendInfo(source, "Maybe try /backup list");
+                    log.sendInfo(source, info7.getString());
+                    log.sendInfo(source, info8.getString());
                 }
         );
         return 0;

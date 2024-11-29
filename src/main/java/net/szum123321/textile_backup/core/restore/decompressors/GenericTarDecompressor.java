@@ -18,6 +18,7 @@
 
 package net.szum123321.textile_backup.core.restore.decompressors;
 
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
 import net.szum123321.textile_backup.core.digest.FileTreeHashBuilder;
@@ -39,6 +40,8 @@ public class GenericTarDecompressor {
     private final static TextileLogger log = new TextileLogger(TextileBackup.MOD_NAME);
 
     public static long decompress(Path input, Path target) throws IOException {
+        Text info = Text.translatable("text.Compression.took.info");
+        Text errorinfo = Text.translatable("text.read.error.info");
         Instant start = Instant.now();
         FileTreeHashBuilder treeBuilder = new FileTreeHashBuilder(0);
 
@@ -50,7 +53,7 @@ public class GenericTarDecompressor {
 
             while ((entry = archiveInputStream.getNextTarEntry()) != null) {
                 if(!archiveInputStream.canReadEntryData(entry))
-                    throw new IOException("Couldn't read archive entry! " + entry.getName());
+                    throw new IOException(errorinfo.getString() + entry.getName());
 
                 Path file = target.resolve(entry.getName());
 
@@ -68,7 +71,7 @@ public class GenericTarDecompressor {
             throw new IOException(e);
         }
 
-        log.info("Decompression took {} seconds.", Utilities.formatDuration(Duration.between(start, Instant.now())));
+        log.info(info.getString(), Utilities.formatDuration(Duration.between(start, Instant.now())));
 
         try {
             return treeBuilder.getValue(false);
@@ -78,6 +81,7 @@ public class GenericTarDecompressor {
     }
 
     private static InputStream getCompressorInputStream(InputStream inputStream) throws CompressorException {
+        Text errorinfo = Text.translatable("text.reading.error.info");
         try {
             return new CompressorStreamFactory().createCompressorInputStream(inputStream);
         } catch (CompressorException e) {
@@ -90,7 +94,7 @@ public class GenericTarDecompressor {
                 signatureLength = IOUtils.readFully(inputStream, tarHeader);
                 inputStream.reset();
             } catch (IOException e1) {
-                throw new CompressorException("IOException while reading tar signature", e1);
+                throw new CompressorException(errorinfo.getString(), e1);
             }
 
             if(TarArchiveInputStream.matches(tarHeader, signatureLength)) return inputStream;
