@@ -66,6 +66,7 @@ public class RestoreHelper {
         Text info = Text.translatable("text.backup.initiated.info");
         Text info2 = Text.translatable("text.backup.initiated.server.info");
         Text info3 = Text.translatable("text.server_shutdown_warning");
+        Text info4 = Text.translatable("text.server_shutdown_warning.restoreDelay");
         if(ctx.initiator() == ActionInitiator.Player)
             log.info(info.getString(), ctx.commandSource().getName());
         else
@@ -73,7 +74,7 @@ public class RestoreHelper {
 
         Utilities.notifyPlayers(
                 ctx.server(),
-                info3.getString() + config.get().restoreDelay + info3.getString()
+                info3.getString() + config.get().restoreDelay + info4.getString()
         );
 
         return new AwaitThread(

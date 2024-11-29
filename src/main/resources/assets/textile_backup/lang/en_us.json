@@ -143,7 +143,8 @@
   "text.lock.file.info": "An exception occurred while trying to lock the file!",
   "text.backup.initiated.info": "Backup restoration was initiated by: {}",
   "text.backup.initiated.server.info": "Backup restoration was initiated form Server Console",
-  "text.server_shutdown_warning": "Warning! The server is going to shut down in %d seconds!",
+  "text.server_shutdown_warning": "Warning! The server is going to shut down in ",
+  "text.server_shutdown_warning.restoreDelay": " seconds! ",
   "text.Error.backups.info": "Error while listing available backups",
 
   "text.autoconfig.textile_backup.option.dateTimeFormat": "Date&Time format",

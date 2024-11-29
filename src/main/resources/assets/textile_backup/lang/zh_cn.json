@@ -143,7 +143,8 @@
   "text.lock.file.info": "尝试锁定文件时发生异常!",
   "text.backup.initiated.info": "备份恢复至: {}",
   "text.backup.initiated.server.info": "备份恢复是从 Server Console 启动的",
-  "text.server_shutdown_warning": "警告！服务器将在 %d 秒后关闭!",
+  "text.server_shutdown_warning": "警告！服务器将在 ",
+  "text.server_shutdown_warning.restoreDelay": " 秒后关闭! ",
   "text.Error.backups.info": "列出可用备份时出错",
 
   "text.autoconfig.textile_backup.option.dateTimeFormat": "日期和时间格式",
