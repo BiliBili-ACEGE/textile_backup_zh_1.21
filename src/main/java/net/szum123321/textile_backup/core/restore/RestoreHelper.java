@@ -19,6 +19,7 @@
 package net.szum123321.textile_backup.core.restore;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 import net.szum123321.textile_backup.Globals;
 import net.szum123321.textile_backup.TextileBackup;
 import net.szum123321.textile_backup.TextileLogger;
@@ -38,10 +39,10 @@ public class RestoreHelper {
 
     public static Optional<RestoreableFile> findFileAndLockIfPresent(LocalDateTime backupTime, MinecraftServer server) {
         Path root = Utilities.getBackupRootPath(Utilities.getLevelName(server));
-
+        Text info = Text.translatable("text.lock.file.info");
         Optional<RestoreableFile> optionalFile =
                 RestoreableFile.applyOnFiles(root, Optional.empty(),
-                        e -> log.error("An exception occurred while trying to lock the file!", e),
+                        e -> log.error(info.getString(), e),
                         s -> s.filter(rf -> rf.getCreationTime().equals(backupTime))
                                 .findFirst());
 
@@ -62,14 +63,17 @@ public class RestoreHelper {
     }
 
     public static AwaitThread create(RestoreContext ctx) {
+        Text info = Text.translatable("text.backup.initiated.info");
+        Text info2 = Text.translatable("text.backup.initiated.server.info");
+        Text info3 = Text.translatable("text.server_shutdown_warning");
         if(ctx.initiator() == ActionInitiator.Player)
-            log.info("Backup restoration was initiated by: {}", ctx.commandSource().getName());
+            log.info(info.getString(), ctx.commandSource().getName());
         else
-            log.info("Backup restoration was initiated form Server Console");
+            log.info(info2.getString());
 
         Utilities.notifyPlayers(
                 ctx.server(),
-                "Warning! The server is going to shut down in " + config.get().restoreDelay + " seconds!"
+                info3.getString() + config.get().restoreDelay + info3.getString()
         );
 
         return new AwaitThread(
@@ -80,9 +84,9 @@ public class RestoreHelper {
 
     public static LinkedList<RestoreableFile> getAvailableBackups(MinecraftServer server) {
         Path root = Utilities.getBackupRootPath(Utilities.getLevelName(server));
-
+        Text info = Text.translatable("text.Error.backups.info");
         return RestoreableFile.applyOnFiles(root, new LinkedList<>(),
-                e -> log.error("Error while listing available backups", e),
+                e -> log.error(info.getString(), e),
                 s -> s.sorted().collect(Collectors.toCollection(LinkedList::new)));
     }
 }
